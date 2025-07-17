@@ -39,11 +39,19 @@ export default function Home() {
   const [priority, setPriority] = useState<"Low" | "Medium" | "High">("Low");
   const [xp, setXp] = useState(0);
   const [xpHistory, setXpHistory] = useState<{ task: string; xp: number }[]>([]);
-  const [userId] = useState(() => "User-" + Math.random().toString(36).slice(2, 10));
+  const [userId, setUserId] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    let stored = window.localStorage.getItem("gamified-todo-userid");
+    if (!stored) {
+      stored = "User-" + Math.random().toString(36).slice(2, 10);
+      window.localStorage.setItem("gamified-todo-userid", stored);
+    }
+    setUserId(stored);
+  }, []);
 
   const completedCount = tasks.filter((t) => t.completed).length;
   const level = getLevel(xp);
-  const nextLevelXp = LEVEL_XP * level;
   const xpInLevel = xp - LEVEL_XP * (level - 1);
 
   function addTask() {
@@ -104,13 +112,15 @@ export default function Home() {
             <span>
               <span className="inline-flex items-center gap-1">
                 <span className="material-symbols-outlined text-base">person</span>
-                {userId}
+                {userId ? userId : "…"}
               </span>
             </span>
             <span>
               Level: <b>{level}</b> | Tasks Completed: <b>{completedCount}</b>
             </span>
-            <span className="text-xs text-gray-400">Your ID: {btoa(userId).slice(0, 24)}</span>
+            <span className="text-xs text-gray-400">
+              Your ID: {userId ? btoa(userId).slice(0, 24) : "…"}
+            </span>
           </div>
         </div>
 
@@ -140,7 +150,7 @@ export default function Home() {
               <select
                 className="border rounded px-3 py-2 text-sm w-32 outline-[#6c63ff]"
                 value={priority}
-                onChange={(e) => setPriority(e.target.value as any)}
+                onChange={(e) => setPriority(e.target.value as "Low" | "Medium" | "High")}
               >
                 <option>Low</option>
                 <option>Medium</option>
