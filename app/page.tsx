@@ -27,25 +27,20 @@ const initialClasses: ClassItem[] = [
 ];
 
 export default function Home() {
-  // Time and Date
   const [now, setNow] = useState(new Date());
   useEffect(() => {
     const interval = setInterval(() => setNow(new Date()), 1000 * 30);
     return () => clearInterval(interval);
   }, []);
 
-  // Classes
   const [classes] = useState<ClassItem[]>(initialClasses);
 
-  // Quick Tasks
   const [tasks, setTasks] = useState<Task[]>([]);
   const [taskInput, setTaskInput] = useState("");
 
-  // Notes
   const [notes, setNotes] = useState<Note[]>([]);
   const [noteInput, setNoteInput] = useState("");
 
-  // Navigation
   const navItems = [
     { label: "Notes", href: "#" },
     { label: "Calendar", href: "#" },
@@ -96,9 +91,12 @@ export default function Home() {
           {/* Time + Date */}
           <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
             <span className="text-lg font-semibold mb-1">Time + Date</span>
-            <span className="text-2xl font-mono">{now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="text-2xl font-mono">
+              {now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+            </span>
             <span className="text-sm text-gray-500">{now.toLocaleDateString()}</span>
           </div>
+
           {/* Quick Tasks */}
           <div className="bg-white rounded-xl shadow p-4">
             <span className="font-semibold text-base mb-2 block">Quick Tasks</span>
@@ -138,6 +136,7 @@ export default function Home() {
               ))}
             </ul>
           </div>
+
           {/* Quick Notes */}
           <div className="bg-white rounded-xl shadow p-4">
             <span className="font-semibold text-base mb-2 block">Quick Notes</span>
@@ -186,7 +185,9 @@ export default function Home() {
                     <div className="text-sm text-gray-500">{cls.time} &middot; {cls.location}</div>
                   </div>
                   <div className="flex gap-2">
-                    <button className="bg-[#e0e7ff] text-[#6c63ff] px-3 py-1 rounded text-xs font-semibold">Details</button>
+                    <button className="text-sm text-gray-500 hover:text-gray-700 underline">
+                      Details
+                    </button>
                   </div>
                 </div>
               ))}
@@ -208,7 +209,6 @@ export default function Home() {
             </ul>
           </div>
           <div className="bg-white rounded-xl shadow p-4 h-40 flex items-center justify-center text-gray-300">
-            {/* Placeholder for image or widget */}
             <span className="text-6xl">📚</span>
           </div>
         </aside>
