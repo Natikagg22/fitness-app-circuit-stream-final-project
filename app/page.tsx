@@ -1,351 +1,218 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+
+type ClassItem = {
+  id: string;
+  name: string;
+  time: string;
+  location: string;
+};
 
 type Task = {
   id: string;
   text: string;
-  due: string;
-  priority: "Low" | "Medium" | "High";
-  completed: boolean;
+  done: boolean;
 };
 
-type Reward = {
+type Note = {
   id: string;
-  label: string;
-  xp: number;
-  emoji: string;
-  disabled: boolean;
+  text: string;
 };
 
-const REWARDS: Reward[] = [
-  { id: "gaming", label: "Gaming Credit ($20)", xp: 1200, emoji: "🎮", disabled: true },
-  { id: "book", label: "Bookstore Voucher ($5)", xp: 300, emoji: "📚", disabled: true },
-  { id: "movie", label: "Movie Ticket", xp: 500, emoji: "🎬", disabled: true },
-  { id: "coffee", label: "Coffee Voucher", xp: 200, emoji: "☕️", disabled: true },
-  { id: "gift", label: "Online Store Gift Card ($10)", xp: 1000, emoji: "🎁", disabled: true },
+const initialClasses: ClassItem[] = [
+  { id: "1", name: "Math 101", time: "Mon 9:00-10:30", location: "Room 201" },
+  { id: "2", name: "Biology 202", time: "Tue 11:00-12:30", location: "Room 105" },
+  { id: "3", name: "History 303", time: "Wed 14:00-15:30", location: "Room 307" },
+  { id: "4", name: "CS 404", time: "Thu 16:00-17:30", location: "Room 410" },
 ];
 
-const XP_PER_TASK = 20;
-const LEVEL_XP = 100;
-
-function getLevel(xp: number) {
-  return Math.floor(xp / LEVEL_XP) + 1;
-}
-
 export default function Home() {
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [input, setInput] = useState("");
-  const [due, setDue] = useState("");
-  const [priority, setPriority] = useState<"Low" | "Medium" | "High">("Low");
-  const [xp, setXp] = useState(0);
-  const [xpHistory, setXpHistory] = useState<{ task: string; xp: number }[]>([]);
-  const [userId, setUserId] = useState<string | null>(null);
-
-  React.useEffect(() => {
-    let stored = window.localStorage.getItem("gamified-todo-userid");
-    if (!stored) {
-      stored = "User-" + Math.random().toString(36).slice(2, 10);
-      window.localStorage.setItem("gamified-todo-userid", stored);
-    }
-    setUserId(stored);
+  // Time and Date
+  const [now, setNow] = useState(new Date());
+  useEffect(() => {
+    const interval = setInterval(() => setNow(new Date()), 1000 * 30);
+    return () => clearInterval(interval);
   }, []);
 
-  const completedCount = tasks.filter((t) => t.completed).length;
-  const level = getLevel(xp);
-  const xpInLevel = xp - LEVEL_XP * (level - 1);
+  // Classes
+  const [classes] = useState<ClassItem[]>(initialClasses);
+
+  // Quick Tasks
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [taskInput, setTaskInput] = useState("");
+
+  // Notes
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [noteInput, setNoteInput] = useState("");
+
+  // Navigation
+  const navItems = [
+    { label: "Notes", href: "#" },
+    { label: "Calendar", href: "#" },
+    { label: "Books/Journal", href: "#" },
+    { label: "Schedule", href: "#" },
+  ];
 
   function addTask() {
-    if (!input.trim()) return;
-    setTasks([
-      ...tasks,
-      {
-        id: Math.random().toString(36).slice(2),
-        text: input,
-        due,
-        priority,
-        completed: false,
-      },
-    ]);
-    setInput("");
-    setDue("");
-    setPriority("Low");
+    if (!taskInput.trim()) return;
+    setTasks([...tasks, { id: Math.random().toString(36).slice(2), text: taskInput, done: false }]);
+    setTaskInput("");
   }
 
-  function completeTask(id: string) {
-    setTasks((tasks) =>
-      tasks.map((t) =>
-        t.id === id ? { ...t, completed: true } : t
-      )
+  function toggleTask(id: string) {
+    setTasks(tasks =>
+      tasks.map(t => (t.id === id ? { ...t, done: !t.done } : t))
     );
-    const task = tasks.find((t) => t.id === id);
-    setXp((xp) => xp + XP_PER_TASK);
-    setXpHistory((hist) => [
-      { task: task?.text || "Task", xp: XP_PER_TASK },
-      ...hist,
-    ]);
   }
 
-  function deleteTask(id: string) {
-    setTasks((tasks) => tasks.filter((t) => t.id !== id));
+  function removeTask(id: string) {
+    setTasks(tasks => tasks.filter(t => t.id !== id));
   }
 
-  function canRedeem(reward: Reward) {
-    return xp >= reward.xp;
+  function addNote() {
+    if (!noteInput.trim()) return;
+    setNotes([...notes, { id: Math.random().toString(36).slice(2), text: noteInput }]);
+    setNoteInput("");
   }
 
-  function redeemReward(reward: Reward) {
-    if (!canRedeem(reward)) return;
-    setXp((xp) => xp - reward.xp);
-    setXpHistory((hist) => [
-      { task: `Redeemed: ${reward.label}`, xp: -reward.xp },
-      ...hist,
-    ]);
+  function removeNote(id: string) {
+    setNotes(notes => notes.filter(n => n.id !== id));
   }
 
   return (
     <div className="min-h-screen bg-[#f8f9fb] flex flex-col items-center p-4 sm:p-8 font-sans">
-      <div className="w-full max-w-5xl flex flex-col gap-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row justify-between items-center bg-white rounded-xl shadow p-6 mb-2">
-          <h1 className="text-3xl font-bold text-[#6c63ff] mb-2 sm:mb-0">Gamified To-Do</h1>
-          <div className="text-sm text-gray-700 flex flex-col items-end">
-            <span>
-              <span className="inline-flex items-center gap-1">
-                <span className="material-symbols-outlined text-base">person</span>
-                {userId ? userId : "…"}
-              </span>
-            </span>
-            <span>
-              Level: <b>{level}</b> | Tasks Completed: <b>{completedCount}</b>
-            </span>
-            <span className="text-xs text-gray-400">
-              Your ID: {userId ? btoa(userId).slice(0, 24) : "…"}
-            </span>
-          </div>
+      {/* Header */}
+      <header className="w-full max-w-5xl mb-6">
+        <div className="flex flex-col items-center gap-2">
+          <h1 className="text-3xl font-bold tracking-wide text-[#6c63ff]">HOME PAGE</h1>
+          <div className="w-full h-2 bg-gray-200 rounded mt-2 mb-2" />
         </div>
+      </header>
 
-        {/* Main Content */}
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Tasks */}
-          <div className="flex-1 bg-white rounded-xl shadow p-6">
-            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-              <span className="material-symbols-outlined text-green-500">check_circle</span>
-              Your Tasks
-            </h2>
-            {/* Add Task */}
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+      {/* Main Layout */}
+      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Left Sidebar */}
+        <aside className="md:col-span-1 flex flex-col gap-6">
+          {/* Time + Date */}
+          <div className="bg-white rounded-xl shadow p-4 flex flex-col items-center">
+            <span className="text-lg font-semibold mb-1">Time + Date</span>
+            <span className="text-2xl font-mono">{now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+            <span className="text-sm text-gray-500">{now.toLocaleDateString()}</span>
+          </div>
+          {/* Quick Tasks */}
+          <div className="bg-white rounded-xl shadow p-4">
+            <span className="font-semibold text-base mb-2 block">Quick Tasks</span>
+            <div className="flex gap-2 mb-2">
               <input
-                className="border rounded px-3 py-2 flex-1 text-sm outline-[#6c63ff]"
-                placeholder="Add a new task..."
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && addTask()}
+                className="border rounded px-2 py-1 text-sm flex-1"
+                placeholder="Add a task..."
+                value={taskInput}
+                onChange={e => setTaskInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addTask()}
               />
-              <input
-                className="border rounded px-3 py-2 text-sm w-36 outline-[#6c63ff]"
-                type="date"
-                value={due}
-                onChange={(e) => setDue(e.target.value)}
-              />
-              <select
-                className="border rounded px-3 py-2 text-sm w-32 outline-[#6c63ff]"
-                value={priority}
-                onChange={(e) => setPriority(e.target.value as "Low" | "Medium" | "High")}
-              >
-                <option>Low</option>
-                <option>Medium</option>
-                <option>High</option>
-              </select>
               <button
-                className="bg-[#6c63ff] text-white rounded px-4 py-2 font-semibold hover:bg-[#554fd8] transition"
+                className="bg-[#6c63ff] text-white px-3 py-1 rounded hover:bg-[#554fd8] text-sm"
                 onClick={addTask}
+                aria-label="Add task"
               >
-                + Add Task
+                +
               </button>
             </div>
-            {/* Task List */}
-            <div className="flex flex-col gap-2">
-              {tasks.length === 0 && (
-                <div className="text-gray-400 text-center py-8">No tasks yet!</div>
-              )}
-              {tasks.map((task) => (
-                <div
-                  key={task.id}
-                  className={`flex items-center justify-between rounded-lg px-4 py-3 border ${
-                    task.completed
-                      ? "bg-green-50 text-gray-400 line-through"
-                      : "bg-gray-50"
-                  }`}
-                >
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">{task.text}</span>
-                    <div className="text-xs flex gap-4 text-gray-500">
-                      {task.due && (
-                        <span>
-                          <span className="material-symbols-outlined text-base align-middle">event</span>
-                          Due: {task.due}
-                        </span>
-                      )}
-                      <span>
-                        Priority:{" "}
-                        <span
-                          className={
-                            task.priority === "High"
-                              ? "text-red-500"
-                              : task.priority === "Medium"
-                              ? "text-yellow-500"
-                              : "text-green-500"
-                          }
-                        >
-                          {task.priority}
-                        </span>
-                      </span>
-                    </div>
+            <ul className="space-y-1">
+              {tasks.map(task => (
+                <li key={task.id} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={task.done}
+                    onChange={() => toggleTask(task.id)}
+                  />
+                  <span className={task.done ? "line-through text-gray-400" : ""}>{task.text}</span>
+                  <button
+                    className="ml-auto text-red-400 hover:text-red-600"
+                    onClick={() => removeTask(task.id)}
+                    aria-label="Remove task"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+          {/* Quick Notes */}
+          <div className="bg-white rounded-xl shadow p-4">
+            <span className="font-semibold text-base mb-2 block">Quick Notes</span>
+            <div className="flex gap-2 mb-2">
+              <input
+                className="border rounded px-2 py-1 text-sm flex-1"
+                placeholder="Add a note..."
+                value={noteInput}
+                onChange={e => setNoteInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && addNote()}
+              />
+              <button
+                className="bg-[#6c63ff] text-white px-3 py-1 rounded hover:bg-[#554fd8] text-sm"
+                onClick={addNote}
+                aria-label="Add note"
+              >
+                +
+              </button>
+            </div>
+            <ul className="space-y-1">
+              {notes.map(note => (
+                <li key={note.id} className="flex items-center gap-2">
+                  <span className="flex-1">{note.text}</span>
+                  <button
+                    className="ml-auto text-red-400 hover:text-red-600"
+                    onClick={() => removeNote(note.id)}
+                    aria-label="Remove note"
+                  >
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </aside>
+
+        {/* Center: Classes */}
+        <main className="md:col-span-2 flex flex-col gap-6">
+          <div>
+            <h2 className="text-xl font-semibold mb-3">Classes</h2>
+            <div className="flex flex-col gap-4">
+              {classes.map(cls => (
+                <div key={cls.id} className="bg-white rounded-xl shadow p-4 flex flex-col md:flex-row md:items-center gap-2">
+                  <div className="flex-1">
+                    <div className="font-bold text-lg">{cls.name}</div>
+                    <div className="text-sm text-gray-500">{cls.time} &middot; {cls.location}</div>
                   </div>
                   <div className="flex gap-2">
-                    {!task.completed && (
-                      <button
-                        className="bg-[#6c63ff] text-white rounded-full px-3 py-1 text-xs font-semibold hover:bg-[#554fd8] transition"
-                        onClick={() => completeTask(task.id)}
-                        title="Mark as done"
-                      >
-                        Done
-                      </button>
-                    )}
-                    <button
-                      className="bg-red-100 text-red-500 rounded-full p-2 hover:bg-red-200 transition"
-                      onClick={() => deleteTask(task.id)}
-                      title="Delete"
-                    >
-                      <span className="material-symbols-outlined text-base">delete</span>
-                    </button>
+                    <button className="bg-[#e0e7ff] text-[#6c63ff] px-3 py-1 rounded text-xs font-semibold">Details</button>
                   </div>
                 </div>
               ))}
             </div>
           </div>
+        </main>
 
-          {/* Right: Progress, Rewards, XP */}
-          <div className="flex flex-col gap-4 w-full lg:w-80">
-            {/* Progress */}
-            <div className="bg-white rounded-xl shadow p-4">
-              <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-yellow-500">emoji_events</span>
-                Progress
-              </h3>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="font-bold">Level {level}</span>
-                <span className="text-xs text-gray-400">{xpInLevel} / {LEVEL_XP} XP</span>
-              </div>
-              <div className="w-full bg-gray-200 rounded h-2 mb-2">
-                <div
-                  className="bg-[#6c63ff] h-2 rounded"
-                  style={{ width: `${(xpInLevel / LEVEL_XP) * 100}%` }}
-                />
-              </div>
-              <div className="text-xs text-gray-500">
-                Keep completing tasks to reach Level {level + 1}!
-              </div>
-            </div>
-
-            {/* Upcoming Tasks */}
-            <div className="bg-white rounded-xl shadow p-4">
-              <h3 className="font-semibold text-base flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-blue-400">filter_alt</span>
-                Upcoming Tasks ({tasks.filter((t) => !t.completed).length})
-              </h3>
-              {tasks.filter((t) => !t.completed).length === 0 ? (
-                <div className="text-xs text-gray-400">No uncompleted tasks!</div>
-              ) : (
-                <ul className="text-xs text-gray-700 list-disc ml-4">
-                  {tasks
-                    .filter((t) => !t.completed)
-                    .map((t) => (
-                      <li key={t.id}>{t.text}</li>
-                    ))}
-                </ul>
-              )}
-            </div>
-
-            {/* XP History */}
-            <div className="bg-white rounded-xl shadow p-4">
-              <h3 className="font-semibold text-base flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-green-400">history</span>
-                XP History
-              </h3>
-              {xpHistory.length === 0 ? (
-                <div className="text-xs text-gray-400">No XP history yet.</div>
-              ) : (
-                <ul className="text-xs text-gray-700 flex flex-col gap-1">
-                  {xpHistory.slice(0, 5).map((h, i) => (
-                    <li key={i}>
-                      {h.task}{" "}
-                      <span className={h.xp > 0 ? "text-green-500" : "text-red-500"}>
-                        {h.xp > 0 ? "+" : ""}
-                        {h.xp} XP
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-
-            {/* Rewards */}
-            <div className="bg-white rounded-xl shadow p-4">
-              <h3 className="font-semibold text-base flex items-center gap-2 mb-2">
-                <span className="material-symbols-outlined text-purple-400">card_giftcard</span>
-                Rewards
-              </h3>
-              <div className="flex flex-col gap-3">
-                {REWARDS.map((reward) => (
-                  <div
-                    key={reward.id}
-                    className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="text-2xl">{reward.emoji}</span>
-                      <div>
-                        <div className="font-medium">{reward.label}</div>
-                        <div className="text-xs text-gray-500">{reward.xp} XP</div>
-                      </div>
-                    </div>
-                    <button
-                      className={`rounded px-4 py-1 font-semibold text-sm transition ${
-                        canRedeem(reward)
-                          ? "bg-[#6c63ff] text-white hover:bg-[#554fd8]"
-                          : "bg-gray-200 text-gray-500 cursor-not-allowed"
-                      }`}
-                      disabled={!canRedeem(reward)}
-                      onClick={() => redeemReward(reward)}
-                    >
-                      Redeem
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </div>
+        {/* Right Sidebar: Navigation */}
+        <aside className="md:col-span-1 flex flex-col gap-6">
+          <div className="bg-white rounded-xl shadow p-4">
+            <span className="font-semibold text-base mb-2 block">Navigation</span>
+            <ul className="space-y-2">
+              {navItems.map(item => (
+                <li key={item.label} className="flex items-center gap-2">
+                  <input type="checkbox" className="accent-[#6c63ff]" disabled />
+                  <span>{item.label}</span>
+                </li>
+              ))}
+            </ul>
           </div>
-        </div>
+          <div className="bg-white rounded-xl shadow p-4 h-40 flex items-center justify-center text-gray-300">
+            {/* Placeholder for image or widget */}
+            <span className="text-6xl">📚</span>
+          </div>
+        </aside>
       </div>
-      {/* Google Fonts and Material Symbols */}
-      <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap"
-        rel="stylesheet"
-      />
-      <link
-        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"
-        rel="stylesheet"
-      />
-      <style>{`
-        body, html {
-          font-family: 'Inter', sans-serif;
-        }
-        .material-symbols-outlined {
-          font-family: 'Material Symbols Outlined';
-          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-          vertical-align: middle;
-        }
-      `}</style>
     </div>
   );
 }
