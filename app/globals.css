@@ -3,14 +3,24 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #f8fafc;
+  --foreground: #1a2233;
+  --primary: #1e3a8a;      /* Deep Blue */
+  --primary-hover: #17408b;
+  --secondary: #fbbf24;    /* Gold */
+  --secondary-hover: #f59e0b;
+  --tertiary: #e5e7eb;     /* Light Gray */
+  --tertiary-hover: #d1d5db;
+  --button-text: #fff;
+  --button-secondary-text: #1a2233;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
     --foreground: #ededed;
+    --button-text: #fff;
+    --button-secondary-text: #1a2233;
   }
 }
 
@@ -18,4 +28,60 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Button Styles */
+.btn-primary {
+  @apply px-4 py-2 rounded font-semibold transition;
+  background: var(--primary);
+  color: var(--button-text);
+}
+.btn-primary:hover {
+  background: var(--primary-hover);
+}
+
+.btn-secondary {
+  @apply px-4 py-2 rounded font-semibold transition border border-solid;
+  background: var(--secondary);
+  color: var(--button-secondary-text);
+  border-color: var(--secondary);
+}
+.btn-secondary:hover {
+  background: var(--secondary-hover);
+  border-color: var(--secondary-hover);
+}
+
+.btn-tertiary {
+  @apply px-4 py-2 rounded font-semibold transition border border-solid;
+  background: var(--tertiary);
+  color: var(--foreground);
+  border-color: var(--tertiary);
+}
+.btn-tertiary:hover {
+  background: var(--tertiary-hover);
+  border-color: var(--tertiary-hover);
+}
+
+/* Ensure readable text on colored backgrounds */
+.bg-white,
+.bg-\[\#f8f9fb\],
+.bg-\[\#f8fafc\] {
+  color: var(--foreground);
+}
+
+input, textarea, select {
+  @apply border rounded px-2 py-1 text-sm;
+  border-color: var(--primary);
+  color: var(--foreground);
+  background: #fff;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+/* For checkboxes and accent colors */
+input[type="checkbox"]:checked {
+  accent-color: var(--primary);
 }
