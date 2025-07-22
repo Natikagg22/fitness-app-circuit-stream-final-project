@@ -70,7 +70,7 @@ export default function Home() {
       {/* Logo at the top */}
       <div className="flex justify-center mt-4 mb-2">
         <Image
-          src="/images/image1.png"
+          src="/images/logo.png"
           alt="App Logo"
           width={64}
           height={64}
