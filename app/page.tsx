@@ -27,6 +27,34 @@ const initialClasses: ClassItem[] = [
   { id: "4", name: "CS 404", time: "Thu 16:00-17:30", location: "Room 410" },
 ];
 
+/**
+ * Adds a prefix to image src if running on a GitHub Pages custom domain.
+ * Example: If url is userid.github.io/repo-name.com, 
+ * then add '/repo-name' in front of the image src.
+ */
+function withRepoPrefix(src: string): string {
+  if (typeof window !== "undefined") {
+    const host = window.location.host;
+    // Check for GitHub Pages pattern: userid.github.io/repo-name.com
+    // and extract repo name (between first / and .com)
+    const match = host.match(/^[^.]+\.github\.io\/([^/]+)/);
+    let repo = "";
+    if (match && match[1]) {
+      repo = match[1];
+    } else {
+      // fallback: try to get repo from pathname if deployed as /repo-name/
+      const pathMatch = window.location.pathname.match(/^\/([^/]+)\//);
+      if (pathMatch && pathMatch[1]) {
+        repo = pathMatch[1];
+      }
+    }
+    if (repo && !src.startsWith(`/${repo}`)) {
+      return `/${repo}${src.startsWith("/") ? src : "/" + src}`;
+    }
+  }
+  return src;
+}
+
 export default function Home() {
   // Quick Tasks
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -70,7 +98,7 @@ export default function Home() {
       {/* Logo at the top */}
       <div className="flex justify-center mt-4 mb-2">
         <Image
-          src="/images/logo.png"
+          src={withRepoPrefix("/images/logo.png")}
           alt="App Logo"
           width={64}
           height={64}
